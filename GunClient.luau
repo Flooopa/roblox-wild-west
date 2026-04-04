@@ -326,7 +326,9 @@ local function fire()
 
 	canFire = false
 
-	if currentTracks.fire then currentTracks.fire:Play() end
+	if currentTracks.fire and humanoid.MoveDirection.Magnitude < 0.1 then
+		currentTracks.fire:Play()
+	end
 
 	local fireSound = Instance.new("Sound")
 	fireSound.SoundId = cfg.fireSound
