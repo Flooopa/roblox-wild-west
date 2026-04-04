@@ -17,11 +17,11 @@ return {
 		fireSound      = "rbxassetid://133622115796341",
 		reloadSound    = "rbxassetid://139717586861911",
 		emptySound     = "rbxassetid://117629133235583",
-		pulloutSound   = "rbxassetid://YOUR_REVOLVER_PULLOUT_SOUND",
+		pulloutSound   = "rbxassetid://117906999010038",
 		--fireAnim       = "rbxassetid://YOUR_REVOLVER_FIRE_ANIM",
 		--reloadAnim     = "rbxassetid://YOUR_REVOLVER_RELOAD_ANIM",
 		--adsAnim        = "rbxassetid://YOUR_REVOLVER_ADS_ANIM",
-		idleAnim        = "rbxassetid://YOUR_REVOLVER_IDLE_ANIM",
+		idleAnim        = "rbxassetid://77414618035283",
 	},
 	Rifle = {
 		fireMode       = "semi",
