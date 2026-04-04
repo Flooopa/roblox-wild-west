@@ -16,12 +16,13 @@ local humanoid  = character:WaitForChild("Humanoid")
 local animator  = humanoid:WaitForChild("Animator")
 local camera    = workspace.CurrentCamera
 
-local Remotes    = ReplicatedStorage:WaitForChild("GunRemotes")
-local GunFired   = Remotes:WaitForChild("GunFired")
-local GunReload  = Remotes:WaitForChild("GunReload")
-local GunHit     = Remotes:WaitForChild("GunHit")
-local UpdateAmmo = Remotes:WaitForChild("UpdateAmmo")
-local GunConfig  = require(ReplicatedStorage:WaitForChild("GunConfig"))
+local Remotes     = ReplicatedStorage:WaitForChild("GunRemotes")
+local GunFired    = Remotes:WaitForChild("GunFired")
+local GunReload   = Remotes:WaitForChild("GunReload")
+local GunHit      = Remotes:WaitForChild("GunHit")
+local UpdateAmmo  = Remotes:WaitForChild("UpdateAmmo")
+local RequestAmmo = Remotes:WaitForChild("RequestAmmo")
+local GunConfig   = require(ReplicatedStorage:WaitForChild("GunConfig"))
 local ShiftLockControl = ReplicatedStorage:WaitForChild("ShiftLockControl")
 
 -- -------------------------------
@@ -376,8 +377,6 @@ local function equipGun(gunName)
 
 	ShiftLockControl:Invoke("enable")
 	equippedGun   = gunName
-	currentAmmo   = cfg.magazineSize
-	reserveAmmo   = cfg.reserveAmmo
 	isReloading   = false
 	canFire       = true
 	currentTracks = loadGunAnims(cfg)
@@ -386,10 +385,15 @@ local function equipGun(gunName)
 	arcGui.Enabled    = true
 	UserInputService.MouseIconEnabled = false
 
+	buildArc(cfg.magazineSize)
+
+	-- Fetch real ammo from the server so re-equipping after spending
+	-- ammo or draining reserves shows the correct counts immediately.
+	local mag, reserve = RequestAmmo:InvokeServer(gunName)
+	currentAmmo   = mag
+	reserveAmmo   = reserve
 	magLabel.Text     = tostring(currentAmmo)
 	reserveLabel.Text = tostring(reserveAmmo)
-
-	buildArc(cfg.magazineSize)
 	updateArc(currentAmmo, cfg.magazineSize)
 end
 

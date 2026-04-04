@@ -15,6 +15,11 @@ local GunReload  = Remotes:WaitForChild("GunReload")
 local UpdateAmmo = Remotes:WaitForChild("UpdateAmmo")
 local GunConfig  = require(ReplicatedStorage:WaitForChild("GunConfig"))
 
+-- Created here so it exists before any client WaitForChild calls
+local RequestAmmo = Remotes:FindFirstChild("RequestAmmo")
+	or Instance.new("RemoteFunction", Remotes)
+RequestAmmo.Name = "RequestAmmo"
+
 print("GunServer loaded")
 
 -- ── Ammo tracker ──────────────────────────────────────────
@@ -219,6 +224,14 @@ GunReload.OnServerEvent:Connect(function(player, gunName)
 		UpdateAmmo:FireClient(player, gunName, ammo.mag, ammo.reserve)
 	end)
 end)
+
+-- ── Ammo sync on equip ───────────────────────────────────
+RequestAmmo.OnServerInvoke = function(player, gunName)
+	if typeof(gunName) ~= "string" then return 0, 0 end
+	if not GunConfig[gunName] then return 0, 0 end
+	local ammo = getAmmo(player, gunName)
+	return ammo.mag, ammo.reserve
+end
 
 -- ── Cleanup ───────────────────────────────────────────────
 Players.PlayerRemoving:Connect(function(player)
