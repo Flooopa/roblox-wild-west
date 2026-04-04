@@ -385,6 +385,14 @@ local function equipGun(gunName)
 	arcGui.Enabled    = true
 	UserInputService.MouseIconEnabled = false
 
+	if cfg.pulloutSound and not cfg.pulloutSound:find("YOUR_") then
+		local s = Instance.new("Sound")
+		s.SoundId = cfg.pulloutSound
+		s.Parent = rootPart
+		s:Play()
+		Debris:AddItem(s, 3)
+	end
+
 	buildArc(cfg.magazineSize)
 
 	-- Fetch real ammo from the server so re-equipping after spending

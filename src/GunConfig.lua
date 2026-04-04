@@ -17,6 +17,7 @@ return {
 		fireSound      = "rbxassetid://133622115796341",
 		reloadSound    = "rbxassetid://139717586861911",
 		emptySound     = "rbxassetid://117629133235583",
+		pulloutSound   = "rbxassetid://YOUR_REVOLVER_PULLOUT_SOUND",
 		--fireAnim       = "rbxassetid://YOUR_REVOLVER_FIRE_ANIM",
 		--reloadAnim     = "rbxassetid://YOUR_REVOLVER_RELOAD_ANIM",
 		--adsAnim        = "rbxassetid://YOUR_REVOLVER_ADS_ANIM",

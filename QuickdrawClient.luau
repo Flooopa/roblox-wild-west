@@ -17,7 +17,7 @@ local rootPart  = character:WaitForChild("HumanoidRootPart")
 
 local GunConfig  = require(ReplicatedStorage:WaitForChild("GunConfig"))
 local Remotes    = ReplicatedStorage:WaitForChild("GunRemotes")
-local QuickdrawFired = Remotes:WaitForChild("QuickdrawFired")
+local GunFired   = Remotes:WaitForChild("GunFired")
 local GunHit     = Remotes:WaitForChild("GunHit")
 local ShiftLockControl = ReplicatedStorage:WaitForChild("ShiftLockControl")
 local UpdateAmmo = Remotes:WaitForChild("UpdateAmmo")
@@ -147,7 +147,7 @@ local function enterQuickdraw()
 	local tool = character:FindFirstChildOfClass("Tool")
 	if tool and GunConfig[tool.Name] then return end
 
-	-- Check magazine ammo only — quickdraw uses what's loaded in the cylinder
+	-- Check magazine ammo only ï¿½ quickdraw uses what's loaded in the cylinder
 	if revolverMag <= 0 then
 		-- play empty click and bail
 		local cfg = GunConfig[QUICKDRAW_GUN]
@@ -259,7 +259,7 @@ local function quickdrawFire()
 	-- land where the crosshair points, not offset by the gun model.
 	local rayOrigin = camera.CFrame.Position
 
-	QuickdrawFired:FireServer(rayOrigin, direction)
+	GunFired:FireServer(QUICKDRAW_GUN, rayOrigin, direction)
 
 	-- muzzle smoke (visual only)
 	GunEffectsModule.playFireEffects(muzzle, rootPart, cfg.fireSound)

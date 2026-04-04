@@ -43,7 +43,7 @@ local function getAmmo(player, gunName)
 end
 
 -- ── Bullet simulation ─────────────────────────────────────
-local function simulateBullet(origin, direction, speed, drop, size, color, shooter)
+local function simulateBullet(origin, direction, speed, drop, size, color, shooter, damage)
 	local bullet = Instance.new("Part")
 	bullet.Size = size
 	bullet.Color = color
@@ -145,6 +145,7 @@ local function simulateBullet(origin, direction, speed, drop, size, color, shoot
 		local hum = model and model:FindFirstChildOfClass("Humanoid")
 		if hum and hum.Health > 0 then
 			isEnvironment = false
+			hum:TakeDamage(damage)
 		end
 
 		GunHit:FireAllClients(bullet.Position, isEnvironment)
@@ -184,31 +185,16 @@ GunFired.OnServerEvent:Connect(function(player, gunName, origin, direction)
 		local spreadDir = CFrame.Angles(spreadX, spreadY, 0) * direction.Unit
 		spreadDir = Vector3.new(spreadDir.X, spreadDir.Y, spreadDir.Z)
 
-		local bullet = simulateBullet(
+		simulateBullet(
 			origin,
 			spreadDir,
 			cfg.bulletSpeed,
 			cfg.bulletDrop,
 			cfg.bulletSize,
 			cfg.bulletColor,
-			character
+			character,
+			cfg.damage
 		)
-
-		if bullet then
-			local bulletHit = false
-			bullet.Touched:Connect(function(hit)
-				if bulletHit then return end
-				local model = hit:FindFirstAncestorOfClass("Model")
-				if model and model ~= character then
-					local hum = model:FindFirstChildOfClass("Humanoid")
-					if hum and hum.Health > 0 then
-						bulletHit = true
-						hum:TakeDamage(cfg.damage)
-						bullet:Destroy()
-					end
-				end
-			end)
-		end
 	end
 end)
 
