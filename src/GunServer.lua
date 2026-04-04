@@ -149,9 +149,9 @@ local function simulateBullet(origin, direction, speed, drop, size, color, shoot
 		end
 
 		-- Bullet hole decal on environment surfaces only
-		if isEnvironment and bullet.AssemblyLinearVelocity.Magnitude > 0 then
-			local normal = -bullet.AssemblyLinearVelocity.Unit
-			local holePos = bullet.Position + normal * 0.02
+		if isEnvironment then
+			local normal  = -initialVelocity.Unit
+			local holePos = bullet.Position + normal * 0.05
 
 			local hole = Instance.new("Part")
 			hole.Size = Vector3.new(0.4, 0.4, 0.02)
