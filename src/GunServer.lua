@@ -43,7 +43,7 @@ local function getAmmo(player, gunName)
 end
 
 -- ── Bullet simulation ─────────────────────────────────────
-local function simulateBullet(origin, direction, speed, drop, size, color, shooter, damage)
+local function simulateBullet(origin, direction, speed, drop, size, color, shooter, damage, shooterPlayer)
 	local bullet = Instance.new("Part")
 	bullet.Size = size
 	bullet.Color = color
@@ -148,7 +148,7 @@ local function simulateBullet(origin, direction, speed, drop, size, color, shoot
 			hum:TakeDamage(damage)
 		end
 
-		GunHit:FireAllClients(bullet.Position, isEnvironment)
+		GunHit:FireClient(shooterPlayer, bullet.Position, isEnvironment)
 		bullet:Destroy()
 	end)
 
@@ -193,7 +193,8 @@ GunFired.OnServerEvent:Connect(function(player, gunName, origin, direction)
 			cfg.bulletSize,
 			cfg.bulletColor,
 			character,
-			cfg.damage
+			cfg.damage,
+			player
 		)
 	end
 end)
