@@ -15,9 +15,14 @@ local GunReload  = Remotes:WaitForChild("GunReload")
 local UpdateAmmo = Remotes:WaitForChild("UpdateAmmo")
 local GunConfig  = require(ReplicatedStorage:WaitForChild("GunConfig"))
 
--- Created here so it exists before any client WaitForChild calls
-local RequestAmmo = Remotes:FindFirstChild("RequestAmmo")
-	or Instance.new("RemoteFunction", Remotes)
+-- Ensure RequestAmmo is a RemoteFunction (not a RemoteEvent).
+-- If Studio has a pre-existing RemoteEvent with this name, replace it.
+local _existing = Remotes:FindFirstChild("RequestAmmo")
+if _existing and not _existing:IsA("RemoteFunction") then
+	_existing:Destroy()
+	_existing = nil
+end
+local RequestAmmo = _existing or Instance.new("RemoteFunction", Remotes)
 RequestAmmo.Name = "RequestAmmo"
 
 print("GunServer loaded")
