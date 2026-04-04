@@ -448,10 +448,71 @@ end)
 -- ═══════════════════════════════
 --         HIT DETECTION
 -- ═══════════════════════════════
+local function spawnWindTracer(origin, hitPos)
+	local att0 = Instance.new("Attachment")
+	att0.Position = origin
+	att0.Parent = workspace.Terrain
+
+	local att1 = Instance.new("Attachment")
+	att1.Position = hitPos
+	att1.Parent = workspace.Terrain
+
+	local beam = Instance.new("Beam")
+	beam.Attachment0 = att0
+	beam.Attachment1 = att1
+	beam.Texture = "rbxassetid://12402893521"
+	beam.TextureSpeed = 0.5
+	beam.TextureLength = 8
+	beam.TextureMode = Enum.TextureMode.Wrap
+	beam.Width0 = 0.8
+	beam.Width1 = 0.3
+	beam.FaceCamera = true
+	beam.LightEmission = 0
+	beam.LightInfluence = 1
+	beam.Segments = 10
+	beam.CurveSize0 = 0
+	beam.CurveSize1 = 0
+	beam.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
+	beam.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.2),
+		NumberSequenceKeypoint.new(1, 0.2),
+	})
+	beam.Parent = workspace.Terrain
+
+	local LINGER    = 0.3
+	local FADE_TIME = 0.6
+
+	task.delay(LINGER, function()
+		local start = tick()
+		local conn
+		conn = RunService.Heartbeat:Connect(function()
+			local alpha = (tick() - start) / FADE_TIME
+			if alpha >= 1 then
+				conn:Disconnect()
+				beam:Destroy()
+				att0:Destroy()
+				att1:Destroy()
+				return
+			end
+			local t = 0.2 + alpha * 0.8
+			beam.Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, t),
+				NumberSequenceKeypoint.new(1, t),
+			})
+			beam.Width0 = 0.8 * (1 - alpha)
+			beam.Width1 = 0.3 * (1 - alpha)
+		end)
+	end)
+end
+
 GunHit.OnClientEvent:Connect(function(position, isEnvironment)
 	if not isEnvironment then
 		showHitmarker()
 	end
+	local tool   = character:FindFirstChildOfClass("Tool")
+	local muzzle = tool and tool:FindFirstChild("Muzzle")
+	local origin = muzzle and muzzle.Position or camera.CFrame.Position
+	spawnWindTracer(origin, position)
 end)
 
 -- ═══════════════════════════════
