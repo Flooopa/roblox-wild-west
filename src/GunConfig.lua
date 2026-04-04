@@ -4,7 +4,7 @@ return {
 		damage         = 10,
 		magazineSize   = 6,
 		reserveAmmo    = 36,
-		fireRate       = 0.3,       -- seconds between shots
+		fireRate       = 0.6,       -- seconds between shots
 		reloadTime     = 2.2,
 		bulletSpeed    = 600,
 		bulletDrop     = 0.000000000000001,        -- studs/s² gravity on bullet
@@ -18,10 +18,10 @@ return {
 		reloadSound    = "rbxassetid://139717586861911",
 		emptySound     = "rbxassetid://117629133235583",
 		pulloutSound   = "rbxassetid://117906999010038",
-		fireAnim        = "rbxassetid://136231090455803",
+		fireAnim       = "rbxassetid://136231090455803",
 		--reloadAnim     = "rbxassetid://YOUR_REVOLVER_RELOAD_ANIM",
 		--adsAnim        = "rbxassetid://YOUR_REVOLVER_ADS_ANIM",
-		idleAnim        = "rbxassetid://77414618035283",
+		idleAnim       = "rbxassetid://77414618035283",
 	},
 	Rifle = {
 		fireMode       = "semi",
