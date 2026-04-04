@@ -23,6 +23,7 @@ local GunReload   = Remotes:WaitForChild("GunReload")
 local GunHit      = Remotes:WaitForChild("GunHit")
 local UpdateAmmo  = Remotes:WaitForChild("UpdateAmmo")
 local RequestAmmo = Remotes:WaitForChild("RequestAmmo")
+local TracerFired = Remotes:WaitForChild("TracerFired")
 local GunConfig  = require(ReplicatedStorage:WaitForChild("GunConfig"))
 
 -- ═══════════════════════════════
@@ -509,10 +510,11 @@ GunHit.OnClientEvent:Connect(function(position, isEnvironment)
 	if not isEnvironment then
 		showHitmarker()
 	end
-	local tool   = character:FindFirstChildOfClass("Tool")
-	local muzzle = tool and tool:FindFirstChild("Muzzle")
-	local origin = muzzle and muzzle.Position or camera.CFrame.Position
-	spawnWindTracer(origin, position)
+end)
+
+-- Tracer fires from server to all clients so every player sees it
+TracerFired.OnClientEvent:Connect(function(origin, hitPos)
+	spawnWindTracer(origin, hitPos)
 end)
 
 -- ═══════════════════════════════

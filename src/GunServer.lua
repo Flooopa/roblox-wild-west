@@ -25,6 +25,9 @@ end
 local RequestAmmo = _existing or Instance.new("RemoteFunction", Remotes)
 RequestAmmo.Name = "RequestAmmo"
 
+local TracerFired = Remotes:FindFirstChild("TracerFired") or Instance.new("RemoteEvent", Remotes)
+TracerFired.Name = "TracerFired"
+
 print("GunServer loaded")
 
 -- ── Ammo tracker ──────────────────────────────────────────
@@ -43,7 +46,7 @@ local function getAmmo(player, gunName)
 end
 
 -- ── Bullet simulation ─────────────────────────────────────
-local function simulateBullet(origin, direction, speed, drop, size, color, shooter, damage, shooterPlayer)
+local function simulateBullet(origin, direction, speed, drop, size, color, shooter, damage, shooterPlayer, tracerOffset)
 	local bullet = Instance.new("Part")
 	bullet.Size = size
 	bullet.Color = color
@@ -151,23 +154,33 @@ local function simulateBullet(origin, direction, speed, drop, size, color, shoot
 		-- Bullet hole decal on environment surfaces only
 		if isEnvironment then
 			local normal  = -initialVelocity.Unit
-			local holePos = bullet.Position + normal * 0.05
+			local holePos = bullet.Position + normal * 0.01
 
 			local hole = Instance.new("Part")
-			hole.Size = Vector3.new(0.4, 0.4, 0.02)
+			hole.Size = Vector3.new(0.5, 0.5, 0.01)
 			hole.CFrame = CFrame.new(holePos, holePos + normal)
 			hole.Anchored = true
 			hole.CanCollide = false
 			hole.CastShadow = false
-			hole.Transparency = 1
+			hole.Material = Enum.Material.SmoothPlastic
+			hole.Color = Color3.fromRGB(15, 10, 8)
+			hole.Transparency = 0
 			hole.Parent = workspace
 
 			local decal = Instance.new("Decal", hole)
 			decal.Texture = "rbxassetid://3696145217"
 			decal.Face = Enum.NormalId.Front
+			decal.Transparency = 0
 
 			Debris:AddItem(hole, 60)
 		end
+
+		-- Tracer visible to all clients — find muzzle for accurate origin
+		local tool = shooter:FindFirstChildOfClass("Tool")
+		local muzzle = tool and tool:FindFirstChild("Muzzle")
+		local tracerStart = (muzzle and muzzle.Position or origin)
+			+ Vector3.new(0, tracerOffset or 0, 0)
+		TracerFired:FireAllClients(tracerStart, bullet.Position)
 
 		GunHit:FireClient(shooterPlayer, bullet.Position, isEnvironment)
 		bullet:Destroy()
@@ -215,7 +228,8 @@ GunFired.OnServerEvent:Connect(function(player, gunName, origin, direction)
 			cfg.bulletColor,
 			character,
 			cfg.damage,
-			player
+			player,
+			cfg.tracerOriginOffset or 0
 		)
 	end
 end)

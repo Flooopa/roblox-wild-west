@@ -18,6 +18,7 @@ return {
 		reloadSound    = "rbxassetid://139717586861911",
 		emptySound     = "rbxassetid://117629133235583",
 		pulloutSound   = "rbxassetid://117906999010038",
+		tracerOriginOffset = 0,  -- studs above(+) or below(-) the muzzle for tracer/bullet visual start
 		fireAnim       = "rbxassetid://136231090455803",
 		--reloadAnim     = "rbxassetid://YOUR_REVOLVER_RELOAD_ANIM",
 		--adsAnim        = "rbxassetid://YOUR_REVOLVER_ADS_ANIM",
