@@ -20,6 +20,7 @@ return {
 		--fireAnim       = "rbxassetid://YOUR_REVOLVER_FIRE_ANIM",
 		--reloadAnim     = "rbxassetid://YOUR_REVOLVER_RELOAD_ANIM",
 		--adsAnim        = "rbxassetid://YOUR_REVOLVER_ADS_ANIM",
+		idleAnim        = "rbxassetid://YOUR_REVOLVER_IDLE_ANIM",
 	},
 	Rifle = {
 		fireMode       = "semi",

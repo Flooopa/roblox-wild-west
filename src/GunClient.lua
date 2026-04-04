@@ -36,6 +36,7 @@ local canFire       = true
 local mouseDown     = false
 local normalFOV     = 70
 local currentTracks = {}
+local idleActive    = false
 
 -- ═══════════════════════════════
 --           GUI
@@ -195,10 +196,21 @@ local function loadGunAnims(cfg)
 		track.Looped = false
 		return track
 	end
+
+	local idleTrack = nil
+	if cfg.idleAnim and not cfg.idleAnim:find("YOUR_") then
+		local anim = Instance.new("Animation")
+		anim.AnimationId = cfg.idleAnim
+		idleTrack = animator:LoadAnimation(anim)
+		idleTrack.Priority = Enum.AnimationPriority.Action2
+		idleTrack.Looped = true
+	end
+
 	return {
 		fire   = load(cfg.fireAnim),
 		reload = load(cfg.reloadAnim),
 		ads    = load(cfg.adsAnim),
+		idle   = idleTrack,
 	}
 end
 
@@ -375,6 +387,10 @@ local function equipGun(gunName)
 end
 
 local function unequipGun()
+	if currentTracks.idle then
+		currentTracks.idle:Stop()
+	end
+	idleActive  = false
 	equippedGun = nil
 	exitADS()
 	screenGui.Enabled = false
@@ -459,6 +475,23 @@ RunService.Heartbeat:Connect(function()
 	local cfg = GunConfig[equippedGun]
 	if cfg.fireMode == "auto" and mouseDown then
 		fire()
+	end
+
+	-- Revolver idle: play when standing still, stop when moving or airborne
+	if currentTracks.idle then
+		local state    = humanoid:GetState()
+		local airborne = state == Enum.HumanoidStateType.Jumping
+			or state == Enum.HumanoidStateType.Freefall
+		local moving   = humanoid.MoveDirection.Magnitude > 0.1
+		local shouldIdle = not moving and not airborne
+
+		if shouldIdle and not idleActive then
+			currentTracks.idle:Play()
+			idleActive = true
+		elseif not shouldIdle and idleActive then
+			currentTracks.idle:Stop()
+			idleActive = false
+		end
 	end
 end)
 

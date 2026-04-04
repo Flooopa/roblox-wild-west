@@ -17,6 +17,7 @@ return {
 		fireSound      = "rbxassetid://133622115796341",
 		reloadSound    = "rbxassetid://139717586861911",
 		emptySound     = "rbxassetid://117629133235583",
+		idleAnim       = "rbxassetid://YOUR_REVOLVER_IDLE_ANIM",
 		recoilKick     = 1.5,
 	},
 	Rifle = {
