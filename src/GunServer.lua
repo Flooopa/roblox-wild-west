@@ -148,6 +148,27 @@ local function simulateBullet(origin, direction, speed, drop, size, color, shoot
 			hum:TakeDamage(damage)
 		end
 
+		-- Bullet hole decal on environment surfaces only
+		if isEnvironment and bullet.AssemblyLinearVelocity.Magnitude > 0 then
+			local normal = -bullet.AssemblyLinearVelocity.Unit
+			local holePos = bullet.Position + normal * 0.02
+
+			local hole = Instance.new("Part")
+			hole.Size = Vector3.new(0.4, 0.4, 0.02)
+			hole.CFrame = CFrame.new(holePos, holePos + normal)
+			hole.Anchored = true
+			hole.CanCollide = false
+			hole.CastShadow = false
+			hole.Transparency = 1
+			hole.Parent = workspace
+
+			local decal = Instance.new("Decal", hole)
+			decal.Texture = "rbxassetid://3696145217"
+			decal.Face = Enum.NormalId.Front
+
+			Debris:AddItem(hole, 60)
+		end
+
 		GunHit:FireClient(shooterPlayer, bullet.Position, isEnvironment)
 		bullet:Destroy()
 	end)
