@@ -54,7 +54,6 @@ function GunEffects.playFireEffects(muzzle, rootPart, soundId)
 
 	-- ── Muzzle flash ──────────────────────────────────────────
 	if muzzle then
-		-- Point light flash
 		local light = Instance.new("PointLight", muzzle)
 		light.Color = Color3.fromRGB(255, 140, 40)
 		light.Brightness = 10
@@ -62,45 +61,30 @@ function GunEffects.playFireEffects(muzzle, rootPart, soundId)
 		light.Shadows = true
 		Debris:AddItem(light, 0.06)
 
-		-- Random rotation so each shot looks different
-		local rotation = CFrame.Angles(0, 0, math.rad(math.random(0, 360)))
+		local flashAttach = Instance.new("Attachment", muzzle)
 
-		-- Orange mesh layer
-		local orangePart = Instance.new("Part")
-		orangePart.Size = Vector3.new(1, 1, 1)
-		orangePart.Anchored = true
-		orangePart.CanCollide = false
-		orangePart.CanQuery = false
-		orangePart.CastShadow = false
-		orangePart.Transparency = 1
-		orangePart.CFrame = muzzle.CFrame * rotation
-		orangePart.Parent = workspace
+		local flash = Instance.new("ParticleEmitter", flashAttach)
+		flash.Texture = "rbxassetid://13344777062"
+		flash.FlipbookEnabled = true
+		flash.FlipbookMode = Enum.ParticleFlipbookMode.OneShot
+		flash.FlipbookStartRandom = true
+		flash.LightEmission = 1
+		flash.LightInfluence = 0
+		flash.Size = NumberSequence.new(3.5)
+		flash.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.8, 0),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+		flash.Lifetime = NumberRange.new(0.08, 0.08)
+		flash.Speed = NumberRange.new(0, 0)
+		flash.SpreadAngle = Vector2.new(0, 0)
+		flash.Rate = 0
+		flash.Rotation = NumberRange.new(0, 360)
+		flash.RotSpeed = NumberRange.new(0, 0)
+		flash:Emit(1)
 
-		local orangeMesh = Instance.new("SpecialMesh", orangePart)
-		orangeMesh.MeshType = Enum.MeshType.FileMesh
-		orangeMesh.MeshId = "rbxassetid://437347603"
-		orangeMesh.Scale = Vector3.new(3.5, 3.5, 3.5)
-		orangeMesh.TextureId = ""
-
-		-- White mesh layer (slightly larger)
-		local whitePart = Instance.new("Part")
-		whitePart.Size = Vector3.new(1, 1, 1)
-		whitePart.Anchored = true
-		whitePart.CanCollide = false
-		whitePart.CanQuery = false
-		whitePart.CastShadow = false
-		whitePart.Transparency = 1
-		whitePart.CFrame = muzzle.CFrame * rotation
-		whitePart.Parent = workspace
-
-		local whiteMesh = Instance.new("SpecialMesh", whitePart)
-		whiteMesh.MeshType = Enum.MeshType.FileMesh
-		whiteMesh.MeshId = "rbxassetid://5671930987"
-		whiteMesh.Scale = Vector3.new(4.5, 4.5, 4.5)
-		whiteMesh.TextureId = ""
-
-		Debris:AddItem(orangePart, 0.06)
-		Debris:AddItem(whitePart, 0.06)
+		Debris:AddItem(flashAttach, 0.3)
 	end
 end
 
