@@ -52,38 +52,33 @@ function GunEffects.playFireEffects(muzzle, rootPart, soundId)
 	puff:Emit(10)
 	Debris:AddItem(smokeAttach, 2)
 
-	-- ── Muzzle flash ──────────────────────────────────────────
+	-- ── Muzzle smoke (dense burst at muzzle) ─────────────────
 	if muzzle then
-		local light = Instance.new("PointLight", muzzle)
-		light.Color = Color3.fromRGB(255, 140, 40)
-		light.Brightness = 10
-		light.Range = 24
-		light.Shadows = true
-		Debris:AddItem(light, 0.06)
-
-		local flashAttach = Instance.new("Attachment", muzzle)
-
-		local flash = Instance.new("ParticleEmitter", flashAttach)
-		flash.Texture = "rbxassetid://13344777062"
-		flash.LightEmission = 1
-		flash.LightInfluence = 0
-		flash.Size = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 3.5),
+		local muzzleAttach = Instance.new("Attachment", muzzle)
+		local muzzlePuff = Instance.new("ParticleEmitter", muzzleAttach)
+		muzzlePuff.Texture = "rbxassetid://1370319600"
+		muzzlePuff.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(220, 220, 220)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 60, 60)),
+		})
+		muzzlePuff.LightEmission = 0.05
+		muzzlePuff.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.5),
+			NumberSequenceKeypoint.new(0.4, 1.0),
 			NumberSequenceKeypoint.new(1, 0),
 		})
-		flash.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0),
+		muzzlePuff.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.1),
 			NumberSequenceKeypoint.new(1, 1),
 		})
-		flash.Lifetime = NumberRange.new(0.06, 0.06)
-		flash.Speed = NumberRange.new(0, 0)
-		flash.SpreadAngle = Vector2.new(0, 0)
-		flash.Rate = 0
-		flash.Rotation = NumberRange.new(0, 360)
-		flash.RotSpeed = NumberRange.new(0, 0)
-		flash:Emit(1)
-
-		Debris:AddItem(flashAttach, 0.3)
+		muzzlePuff.Lifetime = NumberRange.new(0.3, 0.6)
+		muzzlePuff.Speed = NumberRange.new(4, 10)
+		muzzlePuff.SpreadAngle = Vector2.new(20, 20)
+		muzzlePuff.Rate = 0
+		muzzlePuff.Rotation = NumberRange.new(0, 360)
+		muzzlePuff.RotSpeed = NumberRange.new(-45, 45)
+		muzzlePuff:Emit(6)
+		Debris:AddItem(muzzleAttach, 1.5)
 	end
 end
 
