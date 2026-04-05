@@ -54,63 +54,53 @@ function GunEffects.playFireEffects(muzzle, rootPart, soundId)
 
 	-- ── Muzzle flash ──────────────────────────────────────────
 	if muzzle then
-		local flashAttach = Instance.new("Attachment", muzzle)
-
 		-- Point light flash
 		local light = Instance.new("PointLight", muzzle)
 		light.Color = Color3.fromRGB(255, 140, 40)
 		light.Brightness = 10
 		light.Range = 24
 		light.Shadows = true
-		Debris:AddItem(light, 0.05)
+		Debris:AddItem(light, 0.06)
 
-		-- Orange starburst layer
-		local orange = Instance.new("ParticleEmitter", flashAttach)
-		orange.Texture = "rbxassetid://437347603"
-		orange.LightEmission = 1
-		orange.LightInfluence = 0
-		orange.Size = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 3.2),
-			NumberSequenceKeypoint.new(0.7, 3.2),
-			NumberSequenceKeypoint.new(1, 0),
-		})
-		orange.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0),
-			NumberSequenceKeypoint.new(0.6, 0),
-			NumberSequenceKeypoint.new(1, 1),
-		})
-		orange.Lifetime = NumberRange.new(0.07, 0.07)
-		orange.Speed = NumberRange.new(0, 0)
-		orange.SpreadAngle = Vector2.new(0, 0)
-		orange.Rate = 0
-		orange.Rotation = NumberRange.new(0, 360)
-		orange.RotSpeed = NumberRange.new(0, 0)
-		orange:Emit(1)
+		-- Random rotation so each shot looks different
+		local rotation = CFrame.Angles(0, 0, math.rad(math.random(0, 360)))
 
-		-- White starburst layer (slightly larger, behind the orange)
-		local white = Instance.new("ParticleEmitter", flashAttach)
-		white.Texture = "rbxassetid://5671930987"
-		white.LightEmission = 1
-		white.LightInfluence = 0
-		white.Size = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 4.5),
-			NumberSequenceKeypoint.new(0.7, 4.5),
-			NumberSequenceKeypoint.new(1, 0),
-		})
-		white.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0),
-			NumberSequenceKeypoint.new(0.6, 0),
-			NumberSequenceKeypoint.new(1, 1),
-		})
-		white.Lifetime = NumberRange.new(0.07, 0.07)
-		white.Speed = NumberRange.new(0, 0)
-		white.SpreadAngle = Vector2.new(0, 0)
-		white.Rate = 0
-		white.Rotation = NumberRange.new(0, 360)
-		white.RotSpeed = NumberRange.new(0, 0)
-		white:Emit(1)
+		-- Orange mesh layer
+		local orangePart = Instance.new("Part")
+		orangePart.Size = Vector3.new(1, 1, 1)
+		orangePart.Anchored = true
+		orangePart.CanCollide = false
+		orangePart.CanQuery = false
+		orangePart.CastShadow = false
+		orangePart.Transparency = 1
+		orangePart.CFrame = muzzle.CFrame * rotation
+		orangePart.Parent = workspace
 
-		Debris:AddItem(flashAttach, 0.3)
+		local orangeMesh = Instance.new("SpecialMesh", orangePart)
+		orangeMesh.MeshType = Enum.MeshType.FileMesh
+		orangeMesh.MeshId = "rbxassetid://437347603"
+		orangeMesh.Scale = Vector3.new(3.5, 3.5, 3.5)
+		orangeMesh.TextureId = ""
+
+		-- White mesh layer (slightly larger)
+		local whitePart = Instance.new("Part")
+		whitePart.Size = Vector3.new(1, 1, 1)
+		whitePart.Anchored = true
+		whitePart.CanCollide = false
+		whitePart.CanQuery = false
+		whitePart.CastShadow = false
+		whitePart.Transparency = 1
+		whitePart.CFrame = muzzle.CFrame * rotation
+		whitePart.Parent = workspace
+
+		local whiteMesh = Instance.new("SpecialMesh", whitePart)
+		whiteMesh.MeshType = Enum.MeshType.FileMesh
+		whiteMesh.MeshId = "rbxassetid://5671930987"
+		whiteMesh.Scale = Vector3.new(4.5, 4.5, 4.5)
+		whiteMesh.TextureId = ""
+
+		Debris:AddItem(orangePart, 0.06)
+		Debris:AddItem(whitePart, 0.06)
 	end
 end
 
