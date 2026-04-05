@@ -16,7 +16,6 @@ local UpdateAmmo = Remotes:WaitForChild("UpdateAmmo")
 local GunConfig  = require(ReplicatedStorage:WaitForChild("GunConfig"))
 
 -- Ensure RequestAmmo is a RemoteFunction (not a RemoteEvent).
--- If Studio has a pre-existing RemoteEvent with this name, replace it.
 local _existing = Remotes:FindFirstChild("RequestAmmo")
 if _existing and not _existing:IsA("RemoteFunction") then
 	_existing:Destroy()
@@ -49,6 +48,9 @@ local function getAmmo(player, gunName)
 end
 
 -- ── Bullet simulation ─────────────────────────────────────
+-- Hit detection uses per-frame raycasting (prevPos → currentPos) instead
+-- of Touched events. This eliminates tunneling at high bullet speeds and
+-- provides exact surface positions/normals for bullet holes.
 local function simulateBullet(origin, direction, speed, drop, size, color, shooter, damage, shooterPlayer, tracerOffset)
 	local bullet = Instance.new("Part")
 	bullet.Size = size
@@ -56,18 +58,14 @@ local function simulateBullet(origin, direction, speed, drop, size, color, shoot
 	bullet.Material = Enum.Material.Neon
 	bullet.CastShadow = false
 	bullet.CanCollide = false
+	bullet.CanQuery = false
 	bullet.Anchored = false
 	bullet.CFrame = CFrame.new(origin, origin + direction)
 	bullet.AssemblyLinearVelocity = direction.Unit * speed
 	bullet.Parent = workspace
-	Debris:AddItem(bullet, 4)
+	Debris:AddItem(bullet, 5)
 
-	-- FIX: Tracers made longer and more visible.
-	-- Changes from original:
-	--   Lifetime: 0.08 → 0.25  (longer streak at all bullet speeds)
-	--   WidthScale end: 0 → 0.4  (tail stays thick rather than tapering to nothing)
-	--   LightEmission: 1 → 1 (kept max)
-	--   Trail color start now uses the bullet's own color for consistency.
+	-- Trail
 	local att0 = Instance.new("Attachment", bullet)
 	att0.Position = Vector3.new(0, 0, size.Z / 2)
 	local att1 = Instance.new("Attachment", bullet)
@@ -93,114 +91,117 @@ local function simulateBullet(origin, direction, speed, drop, size, color, shoot
 	})
 	trail.LightEmission = 1
 
-	local hitRegistered = false
-	local startTime = tick()
+	-- Raycast params: exclude shooter character and bullet itself
+	local rayParams = RaycastParams.new()
+	rayParams.FilterDescendantsInstances = { shooter, bullet }
+	rayParams.FilterType = Enum.RaycastFilterType.Exclude
+
+	local hitRegistered  = false
+	local startTime      = tick()
 	local initialVelocity = direction.Unit * speed
+	local prevPos        = origin
 
 	local conn
 	conn = RunService.Heartbeat:Connect(function(dt)
-		if not bullet or not bullet.Parent then
+		if not bullet.Parent then
 			conn:Disconnect()
 			return
 		end
 
 		local elapsed = tick() - startTime
 
-		if elapsed > 4 then
+		if elapsed > 5 then
 			conn:Disconnect()
 			bullet:Destroy()
 			return
 		end
 
+		-- Update bullet velocity with gravity drop
 		local dropY = -drop * elapsed * elapsed * 0.01
-		local newVelocity = Vector3.new(
+		local currentVel = Vector3.new(
 			initialVelocity.X,
 			initialVelocity.Y + dropY,
 			initialVelocity.Z
 		)
-		bullet.AssemblyLinearVelocity = newVelocity
+		bullet.AssemblyLinearVelocity = currentVel
 
-		local vel = bullet.AssemblyLinearVelocity
-		if vel.Magnitude > 0 then
-			bullet.CFrame = CFrame.new(bullet.Position, bullet.Position + vel)
+		local currentPos = bullet.Position
+
+		if currentVel.Magnitude > 0 then
+			bullet.CFrame = CFrame.new(currentPos, currentPos + currentVel)
 		end
+
+		-- Sweep raycast from previous frame position to current
+		-- This catches hits even when the bullet moves faster than one
+		-- physics frame, eliminating tunneling entirely.
+		if not hitRegistered then
+			local sweepDir = currentPos - prevPos
+			if sweepDir.Magnitude > 0.001 then
+				local result = workspace:Raycast(prevPos, sweepDir, rayParams)
+				if result then
+					hitRegistered = true
+					conn:Disconnect()
+
+					-- Impact flash
+					local impact = Instance.new("Part")
+					impact.Size = Vector3.new(0.25, 0.25, 0.25)
+					impact.Position = result.Position
+					impact.Anchored = true
+					impact.CanCollide = false
+					impact.Material = Enum.Material.Neon
+					impact.Color = Color3.fromRGB(255, 200, 80)
+					impact.Parent = workspace
+					Debris:AddItem(impact, 0.05)
+
+					-- Damage check
+					local isEnvironment = true
+					local hitModel = result.Instance:FindFirstAncestorOfClass("Model")
+					local hum = hitModel and hitModel:FindFirstChildOfClass("Humanoid")
+					if hum and hum.Health > 0 then
+						isEnvironment = false
+						hum:TakeDamage(damage)
+					end
+
+					-- Bullet hole — result.Position and result.Normal are exact
+					-- surface data from the raycast, no approximation needed
+					if isEnvironment then
+						local surfaceNormal = result.Normal
+						local holePos = result.Position + surfaceNormal * 0.02
+
+						local hole = Instance.new("Part")
+						hole.Size = Vector3.new(0.5, 0.5, 0.01)
+						hole.CFrame = CFrame.new(holePos, holePos + surfaceNormal)
+						hole.Anchored = true
+						hole.CanCollide = false
+						hole.CanQuery = false
+						hole.CastShadow = false
+						hole.Material = Enum.Material.SmoothPlastic
+						hole.Color = Color3.fromRGB(15, 10, 8)
+						hole.Transparency = 0
+						hole.Parent = workspace
+
+						local decal = Instance.new("Decal", hole)
+						decal.Texture = "rbxassetid://3696145217"
+						decal.Face = Enum.NormalId.Front
+
+						Debris:AddItem(hole, 60)
+					end
+
+					-- Tracer and hit events
+					local tool = shooter:FindFirstChildOfClass("Tool")
+					local muzzle = tool and tool:FindFirstChild("Muzzle")
+					local tracerStart = (muzzle and muzzle.Position or origin)
+						+ Vector3.new(0, tracerOffset or 0, 0)
+					TracerFired:FireAllClients(tracerStart, result.Position)
+					GunHit:FireClient(shooterPlayer, result.Position, isEnvironment)
+
+					bullet:Destroy()
+				end
+			end
+		end
+
+		prevPos = currentPos
 	end)
-
-	-- impact detection
-	bullet.Touched:Connect(function(hit)
-		if hitRegistered then return end
-		if not hit or not hit.Parent then return end
-
-		local model = hit:FindFirstAncestorOfClass("Model")
-		if model == shooter then return end
-
-		hitRegistered = true
-		conn:Disconnect()
-
-		local impact = Instance.new("Part")
-		impact.Size = Vector3.new(0.3, 0.3, 0.3)
-		impact.Position = bullet.Position
-		impact.Anchored = true
-		impact.CanCollide = false
-		impact.Material = Enum.Material.Neon
-		impact.Color = Color3.fromRGB(255, 200, 80)
-		impact.Parent = workspace
-		Debris:AddItem(impact, 0.05)
-
-		local isEnvironment = true
-		local hum = model and model:FindFirstChildOfClass("Humanoid")
-		if hum and hum.Health > 0 then
-			isEnvironment = false
-			hum:TakeDamage(damage)
-		end
-
-		-- Bullet hole decal on environment surfaces only
-		if isEnvironment then
-			-- Raycast back along the bullet path to find the true surface
-			-- position and normal rather than using bullet.Position which
-			-- is often slightly inside the surface when Touched fires.
-			local rayParams = RaycastParams.new()
-			rayParams.FilterDescendantsInstances = { shooter }
-			rayParams.FilterType = Enum.RaycastFilterType.Exclude
-
-			local rayBack   = bullet.Position - initialVelocity.Unit * 0.5
-			local result    = workspace:Raycast(rayBack, initialVelocity.Unit * 1.0, rayParams)
-
-			local surfacePos    = result and result.Position or bullet.Position
-			local surfaceNormal = result and result.Normal   or -initialVelocity.Unit
-
-			local holePos = surfacePos + surfaceNormal * 0.02
-
-			local hole = Instance.new("Part")
-			hole.Size = Vector3.new(0.5, 0.5, 0.01)
-			hole.CFrame = CFrame.new(holePos, holePos + surfaceNormal)
-			hole.Anchored = true
-			hole.CanCollide = false
-			hole.CastShadow = false
-			hole.Material = Enum.Material.SmoothPlastic
-			hole.Color = Color3.fromRGB(15, 10, 8)
-			hole.Transparency = 0
-			hole.Parent = workspace
-
-			local decal = Instance.new("Decal", hole)
-			decal.Texture = "rbxassetid://3696145217"
-			decal.Face = Enum.NormalId.Front
-
-			Debris:AddItem(hole, 60)
-		end
-
-		-- Tracer visible to all clients — find muzzle for accurate origin
-		local tool = shooter:FindFirstChildOfClass("Tool")
-		local muzzle = tool and tool:FindFirstChild("Muzzle")
-		local tracerStart = (muzzle and muzzle.Position or origin)
-			+ Vector3.new(0, tracerOffset or 0, 0)
-		TracerFired:FireAllClients(tracerStart, bullet.Position)
-
-		GunHit:FireClient(shooterPlayer, bullet.Position, isEnvironment)
-		bullet:Destroy()
-	end)
-
-	return bullet
 end
 
 -- ── Fire handler ──────────────────────────────────────────
@@ -227,9 +228,9 @@ GunFired.OnServerEvent:Connect(function(player, gunName, origin, direction)
 	local pellets = cfg.pellets or 1
 
 	for i = 1, pellets do
-		local spread   = math.rad(cfg.spread)
-		local spreadX  = (math.random() - 0.5) * 2 * spread
-		local spreadY  = (math.random() - 0.5) * 2 * spread
+		local spread    = math.rad(cfg.spread)
+		local spreadX   = (math.random() - 0.5) * 2 * spread
+		local spreadY   = (math.random() - 0.5) * 2 * spread
 		local spreadDir = CFrame.Angles(spreadX, spreadY, 0) * direction.Unit
 		spreadDir = Vector3.new(spreadDir.X, spreadDir.Y, spreadDir.Z)
 
@@ -247,8 +248,7 @@ GunFired.OnServerEvent:Connect(function(player, gunName, origin, direction)
 		)
 	end
 
-	-- Notify all clients so GunEffectsClient can play sound/effects
-	-- for other players. GunEffectsClient skips the local player itself.
+	-- Notify all clients so GunEffectsClient plays sound/effects for other players
 	GunEffectsFired:FireAllClients(player, cfg.fireSound)
 end)
 
