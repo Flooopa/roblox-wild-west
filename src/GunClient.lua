@@ -23,8 +23,9 @@ local GunReload   = Remotes:WaitForChild("GunReload")
 local GunHit      = Remotes:WaitForChild("GunHit")
 local UpdateAmmo  = Remotes:WaitForChild("UpdateAmmo")
 local RequestAmmo = Remotes:WaitForChild("RequestAmmo")
-local TracerFired = Remotes:WaitForChild("TracerFired")
-local GunConfig  = require(ReplicatedStorage:WaitForChild("GunConfig"))
+local TracerFired   = Remotes:WaitForChild("TracerFired")
+local GunConfig     = require(ReplicatedStorage:WaitForChild("GunConfig"))
+local GunEffects    = require(ReplicatedStorage:WaitForChild("GunEffects"))
 
 -- ═══════════════════════════════
 --           STATE
@@ -315,42 +316,14 @@ local function fire()
 	local sy = (math.random() - 0.5) * 2 * spreadRad
 	direction = (CFrame.Angles(sx, sy, 0) * direction).Unit
 
-	GunFired:FireServer(equippedGun, getBarrelOrigin(), direction)
+	-- Camera origin ensures bullets always land on the crosshair regardless
+	-- of where the muzzle is offset. The tracer visual still starts from the
+	-- muzzle on the server side so it looks correct.
+	GunFired:FireServer(equippedGun, camera.CFrame.Position, direction)
 
-	-- FIX: Muzzle smoke now parented to the muzzle Part directly.
-	-- The original code created an Attachment at muzzle.Position (a world-space
-	-- coordinate) and parented it to workspace.Terrain, which placed the smoke
-	-- at that fixed world point but with no local-space offset — so it never
-	-- visually appeared at the gun barrel. Attaching directly to the muzzle Part
-	-- ensures the emitter moves with the gun and fires from the correct position.
-	local tool = character:FindFirstChildOfClass("Tool")
+	local tool   = character:FindFirstChildOfClass("Tool")
 	local muzzle = tool and tool:FindFirstChild("Muzzle")
-	if muzzle then
-		local puff = Instance.new("ParticleEmitter", muzzle)
-		puff.Texture = "rbxassetid://1370319600"
-		puff.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 180, 180)),
-			ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 80, 80)),
-		})
-		puff.LightEmission = 0.2
-		puff.Size = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0.3),
-			NumberSequenceKeypoint.new(0.5, 0.8),
-			NumberSequenceKeypoint.new(1, 0),
-		})
-		puff.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 0),
-			NumberSequenceKeypoint.new(1, 1),
-		})
-		puff.Lifetime = NumberRange.new(0.4, 0.8)
-		puff.Speed = NumberRange.new(3, 8)
-		puff.SpreadAngle = Vector2.new(30, 30)
-		puff.Rate = 0
-		puff.Rotation = NumberRange.new(0, 360)
-		puff.RotSpeed = NumberRange.new(-60, 60)
-		puff:Emit(12)
-		Debris:AddItem(puff, 1)
-	end
+	GunEffects.playVisualEffects(muzzle, rootPart)
 
 	currentAmmo = math.max(0, currentAmmo - 1)
 	magLabel.Text = tostring(currentAmmo)

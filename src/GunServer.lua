@@ -169,15 +169,13 @@ local function simulateBullet(origin, direction, speed, drop, size, color, shoot
 						local holePos = result.Position + surfaceNormal * 0.02
 
 						local hole = Instance.new("Part")
-						hole.Size = Vector3.new(0.5, 0.5, 0.01)
+						hole.Size = Vector3.new(0.22, 0.22, 0.01)
 						hole.CFrame = CFrame.new(holePos, holePos + surfaceNormal)
 						hole.Anchored = true
 						hole.CanCollide = false
 						hole.CanQuery = false
 						hole.CastShadow = false
-						hole.Material = Enum.Material.SmoothPlastic
-						hole.Color = Color3.fromRGB(15, 10, 8)
-						hole.Transparency = 0
+						hole.Transparency = 1
 						hole.Parent = workspace
 
 						local decal = Instance.new("Decal", hole)

@@ -3,12 +3,18 @@ local Debris = game:GetService("Debris")
 
 local GunEffects = {}
 
+-- Visual-only effects (smoke + flash, no sound).
+-- Called by the local player's GunClient which handles sound separately.
+function GunEffects.playVisualEffects(muzzle, rootPart)
+	GunEffects.playFireEffects(muzzle, rootPart, nil)
+end
+
 function GunEffects.playFireEffects(muzzle, rootPart, soundId)
 	local smokeParent = muzzle or rootPart
 	if not smokeParent then return end
 
 	-- ── Fire sound ────────────────────────────────────────────
-	if rootPart then
+	if soundId and rootPart then
 		local fireSound = Instance.new("Sound")
 		fireSound.SoundId = soundId
 		fireSound.Volume = 0.8
