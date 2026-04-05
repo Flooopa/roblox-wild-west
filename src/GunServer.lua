@@ -28,6 +28,9 @@ RequestAmmo.Name = "RequestAmmo"
 local TracerFired = Remotes:FindFirstChild("TracerFired") or Instance.new("RemoteEvent", Remotes)
 TracerFired.Name = "TracerFired"
 
+local GunEffectsFired = Remotes:FindFirstChild("GunEffectsFired") or Instance.new("RemoteEvent", Remotes)
+GunEffectsFired.Name = "GunEffectsFired"
+
 print("GunServer loaded")
 
 -- ── Ammo tracker ──────────────────────────────────────────
@@ -153,12 +156,24 @@ local function simulateBullet(origin, direction, speed, drop, size, color, shoot
 
 		-- Bullet hole decal on environment surfaces only
 		if isEnvironment then
-			local normal  = -initialVelocity.Unit
-			local holePos = bullet.Position + normal * 0.01
+			-- Raycast back along the bullet path to find the true surface
+			-- position and normal rather than using bullet.Position which
+			-- is often slightly inside the surface when Touched fires.
+			local rayParams = RaycastParams.new()
+			rayParams.FilterDescendantsInstances = { shooter }
+			rayParams.FilterType = Enum.RaycastFilterType.Exclude
+
+			local rayBack   = bullet.Position - initialVelocity.Unit * 0.5
+			local result    = workspace:Raycast(rayBack, initialVelocity.Unit * 1.0, rayParams)
+
+			local surfacePos    = result and result.Position or bullet.Position
+			local surfaceNormal = result and result.Normal   or -initialVelocity.Unit
+
+			local holePos = surfacePos + surfaceNormal * 0.02
 
 			local hole = Instance.new("Part")
 			hole.Size = Vector3.new(0.5, 0.5, 0.01)
-			hole.CFrame = CFrame.new(holePos, holePos + normal)
+			hole.CFrame = CFrame.new(holePos, holePos + surfaceNormal)
 			hole.Anchored = true
 			hole.CanCollide = false
 			hole.CastShadow = false
@@ -170,7 +185,6 @@ local function simulateBullet(origin, direction, speed, drop, size, color, shoot
 			local decal = Instance.new("Decal", hole)
 			decal.Texture = "rbxassetid://3696145217"
 			decal.Face = Enum.NormalId.Front
-			decal.Transparency = 0
 
 			Debris:AddItem(hole, 60)
 		end
@@ -232,6 +246,10 @@ GunFired.OnServerEvent:Connect(function(player, gunName, origin, direction)
 			cfg.tracerOriginOffset or 0
 		)
 	end
+
+	-- Notify all clients so GunEffectsClient can play sound/effects
+	-- for other players. GunEffectsClient skips the local player itself.
+	GunEffectsFired:FireAllClients(player, cfg.fireSound)
 end)
 
 -- ── Reload handler ────────────────────────────────────────
