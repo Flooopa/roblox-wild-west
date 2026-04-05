@@ -65,18 +65,17 @@ function GunEffects.playFireEffects(muzzle, rootPart, soundId)
 
 		local flash = Instance.new("ParticleEmitter", flashAttach)
 		flash.Texture = "rbxassetid://13344777062"
-		flash.FlipbookEnabled = true
-		flash.FlipbookMode = Enum.ParticleFlipbookMode.OneShot
-		flash.FlipbookStartRandom = true
 		flash.LightEmission = 1
 		flash.LightInfluence = 0
-		flash.Size = NumberSequence.new(3.5)
+		flash.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 3.5),
+			NumberSequenceKeypoint.new(1, 0),
+		})
 		flash.Transparency = NumberSequence.new({
 			NumberSequenceKeypoint.new(0, 0),
-			NumberSequenceKeypoint.new(0.8, 0),
 			NumberSequenceKeypoint.new(1, 1),
 		})
-		flash.Lifetime = NumberRange.new(0.08, 0.08)
+		flash.Lifetime = NumberRange.new(0.06, 0.06)
 		flash.Speed = NumberRange.new(0, 0)
 		flash.SpreadAngle = Vector2.new(0, 0)
 		flash.Rate = 0
