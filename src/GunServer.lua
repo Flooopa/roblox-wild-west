@@ -137,7 +137,23 @@ local function simulateBullet(origin, direction, speed, drop, size, color, shoot
 		if not hitRegistered then
 			local sweepDir = currentPos - prevPos
 			if sweepDir.Magnitude > 0.001 then
-				local result = workspace:Raycast(prevPos, sweepDir, rayParams)
+				-- Pierce through non-collidable parts by re-casting with
+				-- each skipped instance added to the exclude filter
+				local result = nil
+				local piercedInstances = { shooter, bullet }
+				for _ = 1, 12 do
+					local tempParams = RaycastParams.new()
+					tempParams.FilterDescendantsInstances = piercedInstances
+					tempParams.FilterType = Enum.RaycastFilterType.Exclude
+					local r = workspace:Raycast(prevPos, sweepDir, tempParams)
+					if not r then break end
+					if not r.Instance.CanCollide then
+						table.insert(piercedInstances, r.Instance)
+					else
+						result = r
+						break
+					end
+				end
 				if result then
 					hitRegistered = true
 					conn:Disconnect()
@@ -166,23 +182,22 @@ local function simulateBullet(origin, direction, speed, drop, size, color, shoot
 					-- surface data from the raycast, no approximation needed
 					if isEnvironment then
 						local surfaceNormal = result.Normal
-						local holePos = result.Position + surfaceNormal * 0.02
+						local holePos = result.Position + surfaceNormal * 0.05
 
 						local hole = Instance.new("Part")
-						hole.Size = Vector3.new(0.18, 0.18, 0.05)
+						hole.Size = Vector3.new(0.3, 0.3, 0.1)
 						hole.CFrame = CFrame.new(holePos, holePos + surfaceNormal)
 						hole.Anchored = true
 						hole.CanCollide = false
 						hole.CanQuery = false
 						hole.CastShadow = false
-						hole.Color = Color3.fromRGB(20, 15, 10)
-						hole.Material = Enum.Material.SmoothPlastic
-						hole.Transparency = 0
+						hole.Transparency = 1
 						hole.Parent = workspace
 
 						local decal = Instance.new("Decal", hole)
 						decal.Texture = "rbxassetid://3696145217"
 						decal.Face = Enum.NormalId.Front
+						decal.Transparency = 0
 
 						Debris:AddItem(hole, 60)
 					end
