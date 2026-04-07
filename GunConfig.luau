@@ -18,7 +18,7 @@ return {
 		reloadSound    = "rbxassetid://139717586861911",
 		emptySound     = "rbxassetid://117629133235583",
 		pulloutSound   = "rbxassetid://YOUR_REVOLVER_PULLOUT_SOUND",
-		idleAnim       = "rbxassetid://71266329537651",
+		idleAnim       = "rbxassetid://YOUR_REVOLVER_HOLD_IDLE",  -- idle while holding revolver
 		recoilKick     = 1.5,
 	},
 	Rifle = {

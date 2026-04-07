@@ -45,6 +45,16 @@ local normalFOV     = 70
 local currentTracks = {}
 local idleActive    = false
 
+-- Global bare-hands idle (plays when no gun is equipped)
+local globalIdleTrack do
+	local a = Instance.new("Animation")
+	a.AnimationId = "rbxassetid://71266329537651"
+	globalIdleTrack = animator:LoadAnimation(a)
+	globalIdleTrack.Priority = Enum.AnimationPriority.Action2
+	globalIdleTrack.Looped = true
+end
+local globalIdleActive = false
+
 -- ═══════════════════════════════
 --           GUI
 -- ═══════════════════════════════
@@ -354,6 +364,11 @@ local function equipGun(gunName)
 	canFire       = true
 	currentTracks = loadGunAnims(cfg)
 
+	if globalIdleActive then
+		globalIdleTrack:Stop()
+		globalIdleActive = false
+	end
+
 	screenGui.Enabled = true
 	arcGui.Enabled    = true
 	crosshair.Visible = true
@@ -526,20 +541,36 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 RunService.Heartbeat:Connect(function()
-	if not equippedGun then return end
+	local qdActive = ReplicatedStorage:FindFirstChild("QuickdrawActive")
+	local inQD     = qdActive and qdActive.Value
+
+	local state    = humanoid:GetState()
+	local airborne = state == Enum.HumanoidStateType.Jumping
+		or state == Enum.HumanoidStateType.Freefall
+	local moving   = humanoid.MoveDirection.Magnitude > 0.1
+	local shouldIdle = not moving and not airborne and not inQD
+
+	if not equippedGun then
+		-- No gun: run global bare-hands idle
+		if shouldIdle and not globalIdleActive then
+			globalIdleTrack:Play()
+			globalIdleActive = true
+		elseif not shouldIdle and globalIdleActive then
+			globalIdleTrack:Stop()
+			globalIdleActive = false
+		end
+		return
+	end
+
+	if inQD then return end
+
 	local cfg = GunConfig[equippedGun]
 	if cfg.fireMode == "auto" and mouseDown then
 		fire()
 	end
 
-	-- Revolver idle: play when standing still, stop when moving or airborne
+	-- Revolver hold idle
 	if currentTracks.idle then
-		local state    = humanoid:GetState()
-		local airborne = state == Enum.HumanoidStateType.Jumping
-			or state == Enum.HumanoidStateType.Freefall
-		local moving   = humanoid.MoveDirection.Magnitude > 0.1
-		local shouldIdle = not moving and not airborne
-
 		if shouldIdle and not idleActive then
 			currentTracks.idle:Play()
 			idleActive = true
