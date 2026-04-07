@@ -37,6 +37,7 @@ local MAX_SHOTS      = 3
 local DRAW_TIME      = 0.3
 local BETWEEN_SHOTS  = 0.165
 local DRAW_ANIM_ID   = "rbxassetid://116444252199649"
+local SHOT_ANIM_ID   = "rbxassetid://YOUR_QD_SHOT_ANIM"  -- replace with your QD shot animation ID
 
 -- -------------------------------
 --           STATE
@@ -242,6 +243,16 @@ local function quickdrawFire()
 	updatePips()
 
 	local cfg = GunConfig[QUICKDRAW_GUN]
+
+	-- Play QD shot animation
+	if not SHOT_ANIM_ID:find("YOUR_") then
+		local anim = Instance.new("Animation")
+		anim.AnimationId = SHOT_ANIM_ID
+		local shotTrack = animator:LoadAnimation(anim)
+		shotTrack.Priority = Enum.AnimationPriority.Action3
+		shotTrack.Looped = false
+		shotTrack:Play()
+	end
 
 	local fireSound = Instance.new("Sound")
 	fireSound.SoundId = cfg.fireSound

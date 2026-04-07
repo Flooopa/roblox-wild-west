@@ -17,6 +17,10 @@ local humanoid  = character:WaitForChild("Humanoid")
 local animator  = humanoid:WaitForChild("Animator")
 local camera    = workspace.CurrentCamera
 
+-- Set by QuickdrawClient when QD is active; prevents this script from
+-- firing or playing animations during quickdraw shots
+local qdActive = ReplicatedStorage:FindFirstChild("QuickdrawActive")
+
 local Remotes     = ReplicatedStorage:WaitForChild("GunRemotes")
 local GunFired    = Remotes:WaitForChild("GunFired")
 local GunReload   = Remotes:WaitForChild("GunReload")
@@ -284,6 +288,7 @@ local function fire()
 	if not equippedGun then return end
 	if not canFire then return end
 	if isReloading then return end
+	if qdActive and qdActive.Value then return end  -- QD handles its own shots
 
 	local cfg = GunConfig[equippedGun]
 
