@@ -20,6 +20,7 @@ local GunConfig  = require(ReplicatedStorage:WaitForChild("GunConfig"))
 local Remotes    = ReplicatedStorage:WaitForChild("GunRemotes")
 local GunFired   = Remotes:WaitForChild("GunFired")
 local GunHit     = Remotes:WaitForChild("GunHit")
+local DrainCylinder = Remotes:WaitForChild("DrainCylinder")
 local ShiftLockControl = ReplicatedStorage:WaitForChild("ShiftLockControl")
 local UpdateAmmo = Remotes:WaitForChild("UpdateAmmo")
 local GunEffectsModule = require(ReplicatedStorage:WaitForChild("GunEffects"))
@@ -288,11 +289,9 @@ local function quickdrawFire()
 
 	if shotsLeft <= 0 then
 		outOfAmmo = true
-		-- Auto-exit so the remaining cylinder bullets can't be fired in a
-		-- re-entered QD session (prevents the "extra shot" bug)
-		task.delay(0.3, function()
-			if inQuickdraw then exitQuickdraw() end
-		end)
+		-- Drain remaining cylinder bullets on the server so re-entering QD
+		-- finds an empty chamber (prevents the extra-shot re-entry bug)
+		DrainCylinder:FireServer()
 	end
 end
 

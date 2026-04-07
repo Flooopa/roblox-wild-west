@@ -51,7 +51,7 @@ local globalIdleTrack do
 	local a = Instance.new("Animation")
 	a.AnimationId = "rbxassetid://71266329537651"
 	globalIdleTrack = animator:LoadAnimation(a)
-	globalIdleTrack.Priority = Enum.AnimationPriority.Action2
+	globalIdleTrack.Priority = Enum.AnimationPriority.Idle
 	globalIdleTrack.Looped = true
 end
 local globalIdleActive = false
@@ -512,40 +512,31 @@ TracerFired.OnClientEvent:Connect(function(origin, hitPos)
 end)
 
 -- Bullet hole: server sends hit position + normal, client creates a
--- circular SurfaceGui disc so it always renders correctly locally
+-- native cylinder Part (guaranteed circle, fully black, no decal/SurfaceGui)
 BulletHoleFired.OnClientEvent:Connect(function(hitPos, hitNormal)
-	local holePos = hitPos + hitNormal * 0.015
+	-- Offset slightly off the surface so it doesn't clip
+	local holePos = hitPos + hitNormal * 0.02
 
-	-- Orient part so local Y-axis = surface normal (disc lies flat on surface)
-	local up  = hitNormal
-	local ref = math.abs(up.Y) < 0.99 and Vector3.new(0, 1, 0) or Vector3.new(1, 0, 0)
+	-- The cylinder Part extends along its Y-axis, so orient Y = hitNormal
+	-- so the flat circular face lies flush against the surface
+	local up    = hitNormal
+	local ref   = math.abs(up.Y) < 0.99 and Vector3.new(0, 1, 0) or Vector3.new(1, 0, 0)
 	local right = up:Cross(ref).Unit
 	local fwd   = right:Cross(up).Unit
 	local holeCF = CFrame.fromMatrix(holePos, right, up, -fwd)
 
 	local hole = Instance.new("Part")
-	hole.Size        = Vector3.new(0.25, 0.02, 0.25)
-	hole.CFrame      = holeCF
-	hole.Anchored    = true
-	hole.CanCollide  = false
-	hole.CanQuery    = false
-	hole.CastShadow  = false
-	hole.Transparency = 1
-	hole.Parent      = workspace
-
-	-- SurfaceGui on the outward face (+Y = NormalId.Top) with UICorner = circle
-	local sg = Instance.new("SurfaceGui", hole)
-	sg.Face          = Enum.NormalId.Top
-	sg.SizingMode    = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	sg.PixelsPerStud = 200
-	sg.AlwaysOnTop   = false
-	sg.LightInfluence = 1
-
-	local circle = Instance.new("Frame", sg)
-	circle.Size                  = UDim2.new(1, 0, 1, 0)
-	circle.BackgroundColor3      = Color3.fromRGB(10, 8, 6)
-	circle.BorderSizePixel       = 0
-	Instance.new("UICorner", circle).CornerRadius = UDim.new(0.5, 0)
+	hole.Shape      = Enum.PartType.Cylinder   -- native circle shape
+	-- Y axis = surfaceNormal (cylinder length axis); small Y = thin disc
+	hole.Size       = Vector3.new(0.22, 0.04, 0.22)
+	hole.CFrame     = holeCF
+	hole.Anchored   = true
+	hole.CanCollide = false
+	hole.CanQuery   = false
+	hole.CastShadow = false
+	hole.Color      = Color3.fromRGB(0, 0, 0)
+	hole.Material   = Enum.Material.SmoothPlastic
+	hole.Parent     = workspace
 
 	Debris:AddItem(hole, 60)
 end)

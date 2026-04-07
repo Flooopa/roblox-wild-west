@@ -33,6 +33,9 @@ GunEffectsFired.Name = "GunEffectsFired"
 local BulletHoleFired = Remotes:FindFirstChild("BulletHoleFired") or Instance.new("RemoteEvent", Remotes)
 BulletHoleFired.Name = "BulletHoleFired"
 
+local DrainCylinder = Remotes:FindFirstChild("DrainCylinder") or Instance.new("RemoteEvent", Remotes)
+DrainCylinder.Name = "DrainCylinder"
+
 print("GunServer loaded")
 
 -- ── Ammo tracker ──────────────────────────────────────────
@@ -279,6 +282,15 @@ RequestAmmo.OnServerInvoke = function(player, gunName)
 	local ammo = getAmmo(player, gunName)
 	return ammo.mag, ammo.reserve
 end
+
+-- ── Drain cylinder after QD sequence ─────────────────────
+-- QuickdrawClient fires this when all QD shots are spent so the
+-- remaining bullets in the cylinder are consumed (mag → 0).
+DrainCylinder.OnServerEvent:Connect(function(player)
+	local ammo = getAmmo(player, "Revolver")
+	ammo.mag = 0
+	UpdateAmmo:FireClient(player, "Revolver", 0, ammo.reserve)
+end)
 
 -- ── Cleanup ───────────────────────────────────────────────
 Players.PlayerRemoving:Connect(function(player)
