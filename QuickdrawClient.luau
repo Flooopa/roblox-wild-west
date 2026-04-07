@@ -137,9 +137,7 @@ local function exitQuickdraw()
 		qdActive.Value = false
 	end)
 
-	ShiftLockControl:Invoke("disable")
-	UserInputService.MouseBehavior    = Enum.MouseBehavior.Default
-	UserInputService.MouseIconEnabled = true
+	-- intentionally do NOT disable shift lock on exit
 end
 
 local function enterQuickdraw()
