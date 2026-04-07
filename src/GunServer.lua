@@ -181,23 +181,30 @@ local function simulateBullet(origin, direction, speed, drop, size, color, shoot
 					-- Bullet hole — result.Position and result.Normal are exact
 					-- surface data from the raycast, no approximation needed
 					if isEnvironment then
+						-- Flat black cylinder oriented along the surface normal
 						local surfaceNormal = result.Normal
-						local holePos = result.Position + surfaceNormal * 0.05
+						local holePos = result.Position + surfaceNormal * 0.015
+
+						-- Build a CFrame with Y-axis pointing along surfaceNormal
+						local up = surfaceNormal
+						local ref = math.abs(up.Y) < 0.99 and Vector3.new(0, 1, 0) or Vector3.new(1, 0, 0)
+						local right = up:Cross(ref).Unit
+						local fwd   = right:Cross(up).Unit
+						local holeCF = CFrame.fromMatrix(holePos, right, up, -fwd)
 
 						local hole = Instance.new("Part")
-						hole.Size = Vector3.new(0.3, 0.3, 0.1)
-						hole.CFrame = CFrame.new(holePos, holePos + surfaceNormal)
+						hole.Size = Vector3.new(0.18, 0.02, 0.18)
+						hole.CFrame = holeCF
 						hole.Anchored = true
 						hole.CanCollide = false
 						hole.CanQuery = false
 						hole.CastShadow = false
-						hole.Transparency = 1
+						hole.Color = Color3.fromRGB(5, 5, 5)
+						hole.Material = Enum.Material.SmoothPlastic
 						hole.Parent = workspace
 
-						local decal = Instance.new("Decal", hole)
-						decal.Texture = "rbxassetid://3696145217"
-						decal.Face = Enum.NormalId.Front
-						decal.Transparency = 0
+						local mesh = Instance.new("SpecialMesh", hole)
+						mesh.MeshType = Enum.MeshType.Cylinder
 
 						Debris:AddItem(hole, 60)
 					end

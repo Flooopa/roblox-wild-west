@@ -22,7 +22,7 @@ return {
 		fireAnim       = "rbxassetid://136231090455803",
 		--reloadAnim     = "rbxassetid://YOUR_REVOLVER_RELOAD_ANIM",
 		--adsAnim        = "rbxassetid://YOUR_REVOLVER_ADS_ANIM",
-		idleAnim       = "rbxassetid://77414618035283",
+		idleAnim       = "rbxassetid://71266329537651",
 	},
 	Rifle = {
 		fireMode       = "semi",
