@@ -30,6 +30,9 @@ TracerFired.Name = "TracerFired"
 local GunEffectsFired = Remotes:FindFirstChild("GunEffectsFired") or Instance.new("RemoteEvent", Remotes)
 GunEffectsFired.Name = "GunEffectsFired"
 
+local BulletHoleFired = Remotes:FindFirstChild("BulletHoleFired") or Instance.new("RemoteEvent", Remotes)
+BulletHoleFired.Name = "BulletHoleFired"
+
 print("GunServer loaded")
 
 -- ── Ammo tracker ──────────────────────────────────────────
@@ -181,32 +184,9 @@ local function simulateBullet(origin, direction, speed, drop, size, color, shoot
 					-- Bullet hole — result.Position and result.Normal are exact
 					-- surface data from the raycast, no approximation needed
 					if isEnvironment then
-						-- Flat black cylinder oriented along the surface normal
-						local surfaceNormal = result.Normal
-						local holePos = result.Position + surfaceNormal * 0.015
-
-						-- Build a CFrame with Y-axis pointing along surfaceNormal
-						local up = surfaceNormal
-						local ref = math.abs(up.Y) < 0.99 and Vector3.new(0, 1, 0) or Vector3.new(1, 0, 0)
-						local right = up:Cross(ref).Unit
-						local fwd   = right:Cross(up).Unit
-						local holeCF = CFrame.fromMatrix(holePos, right, up, -fwd)
-
-						local hole = Instance.new("Part")
-						hole.Size = Vector3.new(0.18, 0.02, 0.18)
-						hole.CFrame = holeCF
-						hole.Anchored = true
-						hole.CanCollide = false
-						hole.CanQuery = false
-						hole.CastShadow = false
-						hole.Color = Color3.fromRGB(5, 5, 5)
-						hole.Material = Enum.Material.SmoothPlastic
-						hole.Parent = workspace
-
-						local mesh = Instance.new("SpecialMesh", hole)
-						mesh.MeshType = Enum.MeshType.Cylinder
-
-						Debris:AddItem(hole, 60)
+						-- Tell every client to draw a bullet hole decal locally
+						-- (client-side creation avoids any server replication rendering issues)
+						BulletHoleFired:FireAllClients(result.Position, result.Normal)
 					end
 
 					-- Tracer and hit events

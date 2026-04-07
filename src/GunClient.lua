@@ -21,15 +21,16 @@ local camera    = workspace.CurrentCamera
 -- firing or playing animations during quickdraw shots
 local qdActive = ReplicatedStorage:FindFirstChild("QuickdrawActive")
 
-local Remotes     = ReplicatedStorage:WaitForChild("GunRemotes")
-local GunFired    = Remotes:WaitForChild("GunFired")
-local GunReload   = Remotes:WaitForChild("GunReload")
-local GunHit      = Remotes:WaitForChild("GunHit")
-local UpdateAmmo  = Remotes:WaitForChild("UpdateAmmo")
-local RequestAmmo = Remotes:WaitForChild("RequestAmmo")
-local TracerFired   = Remotes:WaitForChild("TracerFired")
-local GunConfig     = require(ReplicatedStorage:WaitForChild("GunConfig"))
-local GunEffects    = require(ReplicatedStorage:WaitForChild("GunEffects"))
+local Remotes         = ReplicatedStorage:WaitForChild("GunRemotes")
+local GunFired        = Remotes:WaitForChild("GunFired")
+local GunReload       = Remotes:WaitForChild("GunReload")
+local GunHit          = Remotes:WaitForChild("GunHit")
+local UpdateAmmo      = Remotes:WaitForChild("UpdateAmmo")
+local RequestAmmo     = Remotes:WaitForChild("RequestAmmo")
+local TracerFired     = Remotes:WaitForChild("TracerFired")
+local BulletHoleFired = Remotes:WaitForChild("BulletHoleFired")
+local GunConfig       = require(ReplicatedStorage:WaitForChild("GunConfig"))
+local GunEffects      = require(ReplicatedStorage:WaitForChild("GunEffects"))
 
 -- ═══════════════════════════════
 --           STATE
@@ -508,6 +509,45 @@ end)
 -- Tracer fires from server to all clients so every player sees it
 TracerFired.OnClientEvent:Connect(function(origin, hitPos)
 	spawnWindTracer(origin, hitPos)
+end)
+
+-- Bullet hole: server sends hit position + normal, client creates a
+-- circular SurfaceGui disc so it always renders correctly locally
+BulletHoleFired.OnClientEvent:Connect(function(hitPos, hitNormal)
+	local holePos = hitPos + hitNormal * 0.015
+
+	-- Orient part so local Y-axis = surface normal (disc lies flat on surface)
+	local up  = hitNormal
+	local ref = math.abs(up.Y) < 0.99 and Vector3.new(0, 1, 0) or Vector3.new(1, 0, 0)
+	local right = up:Cross(ref).Unit
+	local fwd   = right:Cross(up).Unit
+	local holeCF = CFrame.fromMatrix(holePos, right, up, -fwd)
+
+	local hole = Instance.new("Part")
+	hole.Size        = Vector3.new(0.25, 0.02, 0.25)
+	hole.CFrame      = holeCF
+	hole.Anchored    = true
+	hole.CanCollide  = false
+	hole.CanQuery    = false
+	hole.CastShadow  = false
+	hole.Transparency = 1
+	hole.Parent      = workspace
+
+	-- SurfaceGui on the outward face (+Y = NormalId.Top) with UICorner = circle
+	local sg = Instance.new("SurfaceGui", hole)
+	sg.Face          = Enum.NormalId.Top
+	sg.SizingMode    = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	sg.PixelsPerStud = 200
+	sg.AlwaysOnTop   = false
+	sg.LightInfluence = 1
+
+	local circle = Instance.new("Frame", sg)
+	circle.Size                  = UDim2.new(1, 0, 1, 0)
+	circle.BackgroundColor3      = Color3.fromRGB(10, 8, 6)
+	circle.BorderSizePixel       = 0
+	Instance.new("UICorner", circle).CornerRadius = UDim.new(0.5, 0)
+
+	Debris:AddItem(hole, 60)
 end)
 
 -- ═══════════════════════════════

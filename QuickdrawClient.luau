@@ -6,6 +6,7 @@
 local Players           = game:GetService("Players")
 local UserInputService  = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService      = game:GetService("TweenService")
 local Debris            = game:GetService("Debris")
 
 local player    = Players.LocalPlayer
@@ -38,6 +39,8 @@ local DRAW_TIME      = 0.3
 local BETWEEN_SHOTS  = 0.165
 local DRAW_ANIM_ID   = "rbxassetid://116444252199649"
 local SHOT_ANIM_ID   = "rbxassetid://YOUR_QD_SHOT_ANIM"  -- replace with your QD shot animation ID
+local NORMAL_FOV     = 70   -- default camera FOV
+local QD_FOV         = 62   -- subtle zoom while in quickdraw
 
 -- -------------------------------
 --           STATE
@@ -137,6 +140,11 @@ local function exitQuickdraw()
 		qdActive.Value = false
 	end)
 
+	-- Restore FOV smoothly
+	TweenService:Create(camera, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		FieldOfView = NORMAL_FOV
+	}):Play()
+
 	-- intentionally do NOT disable shift lock on exit
 end
 
@@ -205,6 +213,11 @@ local function enterQuickdraw()
 			end
 		end)
 	end)
+
+	-- Gradual FOV zoom into quickdraw
+	TweenService:Create(camera, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		FieldOfView = QD_FOV
+	}):Play()
 
 	task.delay(DRAW_TIME, function()
 		if inQuickdraw then
@@ -275,6 +288,11 @@ local function quickdrawFire()
 
 	if shotsLeft <= 0 then
 		outOfAmmo = true
+		-- Auto-exit so the remaining cylinder bullets can't be fired in a
+		-- re-entered QD session (prevents the "extra shot" bug)
+		task.delay(0.3, function()
+			if inQuickdraw then exitQuickdraw() end
+		end)
 	end
 end
 

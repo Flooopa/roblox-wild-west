@@ -156,7 +156,7 @@ local function enableShiftLock()
 	reticle.Visible = true
 	UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
 	UserInputService.MouseIconEnabled = false
-	currentOffset = getOffset()
+	-- do NOT snap currentOffset — let the RenderStepped lerp handle the smooth slide-in
 	humanoid.AutoRotate = false
 end
 
@@ -165,7 +165,7 @@ local function disableShiftLock()
 	reticle.Visible = false
 	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 	UserInputService.MouseIconEnabled = true
-	currentOffset = Vector3.new(0, 0, 0)
+	-- do NOT snap currentOffset — let the RenderStepped lerp handle the smooth slide-out
 	humanoid.AutoRotate = true
 end
 
